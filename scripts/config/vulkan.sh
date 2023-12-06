@@ -16,7 +16,7 @@ check_board || { echo "Missing file helper.sh. I've tried to download it for you
 readonly INSTALL_DIR="$HOME/mesa_vulkan"
 readonly SOURCE_CODE_URL="https://gitlab.freedesktop.org/mesa/mesa.git"
 PI_VERSION_NUMBER=$(get_pi_version_number)
-BRANCH_VERSION="mesa-23.2.1"
+BRANCH_VERSION="staging/23.3"
 INPUT=/tmp/vulkan.$$
 
 install() {
@@ -58,7 +58,7 @@ install_vulkan_from_official_repository() {
     local CODENAME
     CODENAME=$(get_codename)
 
-    if [ "$CODENAME" != "bullseye" ]; then
+    if [ "$CODENAME" != "bullseye" && "$CODENAME" != "bookworm" ]; then
         echo -e "You need at least Debian Bullseye to install Vulkan. See: https://wiki.debian.org/bullseye"
         return 0
     fi
@@ -74,7 +74,7 @@ install_vulkan_from_official_repository() {
 compile_and_install_libdrm() {
     local LIBDRM_URL
     local SOURCE_CODE_PATH
-    FILE_NAME="libdrm-2.4.115"
+    FILE_NAME="libdrm-2.4.118"
     LIBDRM_URL="https://dri.freedesktop.org/libdrm/$FILE_NAME.tar.xz"
     SOURCE_CODE_PATH="$HOME/sc"
 
@@ -91,7 +91,7 @@ compile_and_install_libdrm() {
 
 compile() {
     local EXTRA_PARAM
-    EXTRA_PARAM="-mcpu=cortex-a72 -mfpu=neon-fp-armv8"
+    EXTRA_PARAM="-mcpu=cortex-a72 -mfpu=neon-fp-armv8" # -mcpu=cortex-a76 for RPi5, -mfpu=neon-vfpv4 -march=armv7-a -mtune=cortex-a7 if it needs to run on RPi2B
 
     [[ -d $INSTALL_DIR ]] && rm -rf "$INSTALL_DIR"
     install_full_deps
@@ -104,7 +104,7 @@ compile() {
         EXTRA_PARAM="-mcpu=cortex-a72"
     fi
 
-    meson setup --prefix /usr -Dgles1=disabled -Dgles2=enabled -Dplatforms=x11 -Dxlib-lease=auto -Dvulkan-drivers=broadcom -Dgallium-drivers=v3d,kmsro,vc4,virgl,zink -Dbuildtype=release -Dc_args="$EXTRA_PARAM" -Dcpp_args="$EXTRA_PARAM" build
+    meson setup --prefix /usr/local -Dgles1=disabled -Dgles2=enabled -Dplatforms=x11 -Dxlib-lease=auto -Dvulkan-drivers=broadcom -Dgallium-drivers=v3d,kmsro,vc4,virgl,zink -Dbuildtype=release -Dc_args="$EXTRA_PARAM" -Dcpp_args="$EXTRA_PARAM" build
     echo -e "\nCompiling... \n"
     time ninja -C build -j"$(nproc)"
     install
