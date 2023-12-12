@@ -36,16 +36,16 @@ install_full_deps() {
         libxcb-cursor-dev libxkbcommon-dev xutils-dev \
         xutils-dev libpthread-stubs0-dev libpciaccess-dev \
         libffi-dev x11proto-xext-dev libxcb1-dev libxcb-*dev \
-        bison flex libssl-dev libgnutls28-dev x11proto-dri2-dev \
-        x11proto-dri3-dev libx11-dev libxcb-glx0-dev \
+        bison flex libssl-dev libgnutls28-dev x11proto-dev \
+        libx11-dev libxcb-glx0-dev \
         libx11-xcb-dev libxext-dev libxdamage-dev libxfixes-dev \
         libva-dev x11proto-randr-dev x11proto-present-dev \
         libclc-dev libelf-dev git build-essential mesa-utils \
         libvulkan-dev ninja-build libvulkan1 python3-mako \
         libdrm-dev libxshmfence-dev libxxf86vm-dev libwayland-dev \
         python3-mako wayland-protocols libwayland-egl-backend-dev \
-        cmake libassimp-dev python3-pip
-    install_meson
+        cmake libassimp-dev python3-pip meson
+    # install_meson
 }
 
 clone_repo() {
@@ -58,7 +58,7 @@ install_vulkan_from_official_repository() {
     local CODENAME
     CODENAME=$(get_codename)
 
-    if [ "$CODENAME" != "bullseye" && "$CODENAME" != "bookworm" ]; then
+    if [ "$CODENAME" != "bullseye" ] && [ "$CODENAME" != "bookworm" ]; then
         echo -e "You need at least Debian Bullseye to install Vulkan. See: https://wiki.debian.org/bullseye"
         return 0
     fi
@@ -83,7 +83,7 @@ compile_and_install_libdrm() {
     cd "$FILE_NAME" || exit
     [[ ! -d build ]] && mkdir build
     cd build || exit
-    meson setup -Dudev=true -Dvc4=auto -Dintel=disabled -Dvmwgfx=disabled -Dradeon=disabled -Damdgpu=disabled -Dnouveau=disabled -Dfreedreno=disabled -Dinstall-test-programs=true ..
+    meson setup -Dudev=true -Dvc4=auto -Detnaviv=disabled -Dintel=disabled -Dvmwgfx=disabled -Dradeon=disabled -Damdgpu=disabled -Dnouveau=disabled -Dfreedreno=disabled -Dinstall-test-programs=true ..
     time ninja -C . -j"$(nproc)"
     sudo ninja install
     echo "Compiled & installed onto your system. Move on..."
@@ -104,7 +104,7 @@ compile() {
         EXTRA_PARAM="-mcpu=cortex-a72"
     fi
 
-    meson setup --prefix /usr/local -Dgles1=disabled -Dgles2=enabled -Dplatforms=x11 -Dxlib-lease=auto -Dvulkan-drivers=broadcom -Dgallium-drivers=v3d,kmsro,vc4,virgl,zink -Dbuildtype=release -Dc_args="$EXTRA_PARAM" -Dcpp_args="$EXTRA_PARAM" build
+    meson setup --prefix /usr/local -Dglvnd=true -Dgles1=disabled -Dgles2=enabled -Dplatforms=x11 -Dxlib-lease=auto -Dvulkan-drivers=broadcom -Dgallium-drivers=v3d,kmsro,vc4,virgl,zink -Dbuildtype=release -Dc_args="$EXTRA_PARAM" -Dcpp_args="$EXTRA_PARAM" build
     echo -e "\nCompiling... \n"
     time ninja -C build -j"$(nproc)"
     install
@@ -147,5 +147,6 @@ if [[ $response =~ [Nn] ]]; then
     exit_message
 fi
 upgrade_dist
+is_missing_dialog_pkg
 menu_choose_branch
 exit_message
